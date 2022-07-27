@@ -203,8 +203,9 @@ if (!empty($conf->accounting->enabled) && $modecompta != 'BOOKKEEPING') {
 
 
 if ($modecompta == 'CREANCES-DETTES') {
-	$sql = "SELECT date_format(f.datef,'%Y-%m') as dm, sum(f.total_ht) as amount, sum(f.total_ttc) as amount_ttc";
-	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f";
+	$sql = "SELECT IF(ISNULL(exf.datex),date_format(f.datef,'%Y-%m'),date_format(exf.datex,'%Y-%m')) as dm, sum(f.total_ht) as amount, sum(f.total_ttc) as amount_ttc";
+        //$sql = "SELECT date_format(f.datef,'%Y-%m') as dm, sum(f.total_ht) as amount, sum(f.total_ttc) as amount_ttc";
+	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f LEFT JOIN llx_facture_extrafields as exf ON f.rowid = exf.fk_object";
 	$sql .= " WHERE f.fk_statut in (1,2)";
 	if (!empty($conf->global->FACTURE_DEPOSITS_ARE_JUST_PAYMENTS)) {
 		$sql .= " AND f.type IN (0,1,2,5)";
@@ -220,8 +221,8 @@ if ($modecompta == 'CREANCES-DETTES') {
 	 * Liste des paiements (les anciens paiements ne sont pas vus par cette requete car, sur les
 	 * vieilles versions, ils n'etaient pas lies via paiement_facture. On les ajoute plus loin)
 	 */
-	$sql = "SELECT date_format(p.datep, '%Y-%m') as dm, sum(pf.amount) as amount_ttc";
-	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f";
+	$sql = "SELECT IF(ISNULL(exf.datex),date_format(f.datef,'%Y-%m'),date_format(exf.datex,'%Y-%m')) as dm, sum(pf.amount) as amount_ttc";
+	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f LEFT JOIN llx_facture_extrafields as exf ON f.rowid = exf.fk_object";
 	$sql .= ", ".MAIN_DB_PREFIX."paiement_facture as pf";
 	$sql .= ", ".MAIN_DB_PREFIX."paiement as p";
 	$sql .= " WHERE p.rowid = pf.fk_paiement";
