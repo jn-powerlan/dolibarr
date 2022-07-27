@@ -144,8 +144,6 @@ llxHeader();
 
 $form = new Form($db);
 
-$exportlink="";
-$namelink="";
 // Affiche en-tete du rapport
 if ($modecompta == "CREANCES-DETTES") {
 	$name = $langs->trans("Turnover");
@@ -203,10 +201,11 @@ if (!empty($conf->accounting->enabled) && $modecompta != 'BOOKKEEPING') {
 	print info_admin($langs->trans("WarningReportNotReliable"), 0, 0, 1);
 }
 
-
+//var_dump($modecompta);
 if ($modecompta == 'CREANCES-DETTES') {
-	$sql = "SELECT date_format(f.datef,'%Y-%m') as dm, sum(f.total_ht) as amount, sum(f.total_ttc) as amount_ttc";
-	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f";
+	$sql = "SELECT IF(ISNULL(exf.datex),date_format(f.datef,'%Y-%m'),date_format(exf.datex,'%Y-%m')) as dm, sum(f.total_ht) as amount, sum(f.total_ttc) as amount_ttc";
+        //$sql = "SELECT date_format(f.datef,'%Y-%m') as dm, sum(f.total_ht) as amount, sum(f.total_ttc) as amount_ttc";
+	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f LEFT JOIN llx_facture_extrafields as exf ON f.rowid = exf.fk_object";
 	$sql .= " WHERE f.fk_statut in (1,2)";
 	if (!empty($conf->global->FACTURE_DEPOSITS_ARE_JUST_PAYMENTS)) {
 		$sql .= " AND f.type IN (0,1,2,5)";
@@ -222,8 +221,8 @@ if ($modecompta == 'CREANCES-DETTES') {
 	 * Liste des paiements (les anciens paiements ne sont pas vus par cette requete car, sur les
 	 * vieilles versions, ils n'etaient pas lies via paiement_facture. On les ajoute plus loin)
 	 */
-	$sql = "SELECT date_format(p.datep, '%Y-%m') as dm, sum(pf.amount) as amount_ttc";
-	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f";
+	$sql = "SELECT IF(ISNULL(exf.datex),date_format(f.datef,'%Y-%m'),date_format(exf.datex,'%Y-%m')) as dm, sum(pf.amount) as amount_ttc";
+	$sql .= " FROM ".MAIN_DB_PREFIX."facture as f LEFT JOIN llx_facture_extrafields as exf ON f.rowid = exf.fk_object";
 	$sql .= ", ".MAIN_DB_PREFIX."paiement_facture as pf";
 	$sql .= ", ".MAIN_DB_PREFIX."paiement as p";
 	$sql .= " WHERE p.rowid = pf.fk_paiement";
@@ -256,11 +255,6 @@ $sql .= " ORDER BY dm";
 
 $minyearmonth = $maxyearmonth = 0;
 
-$cum = array();
-$cum_ht = array();
-$total_ht = array();
-$total = array();
-
 $result = $db->query($sql);
 if ($result) {
 	$num = $db->num_rows($result);
@@ -275,6 +269,7 @@ if ($result) {
 		}
 		$i++;
 	}
+	//var_dump($obj);
 	$db->free($result);
 } else {
 	dol_print_error($db);
@@ -401,12 +396,6 @@ for ($mois = 1 + $nb_mois_decalage; $mois <= 12 + $nb_mois_decalage; $mois++) {
 		}
 		$case = dol_print_date(dol_mktime(1, 1, 1, $mois_modulo, 1, $annee_decalage), "%Y-%m");
 		$caseprev = dol_print_date(dol_mktime(1, 1, 1, $mois_modulo, 1, $annee_decalage - 1), "%Y-%m");
-
-		$total_ht[$annee]=0;
-		$total[$annee]=0;
-		$cum_ht[$case]=0;
-		$cum[$case]=0;
-
 
 		if ($annee >= $year_start) {	// We ignore $annee < $year_start, we loop on it to be able to make delta, nothing is output.
 			if ($modecompta == 'CREANCES-DETTES') {
