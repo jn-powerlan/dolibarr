@@ -80,8 +80,8 @@ class BankCateg // extends CommonObject
 		$sql .= "label";
 		$sql .= ", entity";
 		$sql .= ") VALUES (";
-		$sql .= " ".(!isset($this->label) ? 'NULL' : "'".$this->db->escape($this->label)."'")."";
-		$sql .= ", ".$conf->entity;
+		$sql .= " ".(!isset($this->label) ? 'NULL' : "'".$this->db->escape($this->label)."'");
+		$sql .= ", ".((int) $conf->entity);
 		$sql .= ")";
 
 		$this->db->begin();
@@ -169,7 +169,7 @@ class BankCateg // extends CommonObject
 
 		// Update request
 		$sql = "UPDATE ".MAIN_DB_PREFIX."bank_categ SET";
-		$sql .= " label=".(isset($this->label) ? "'".$this->db->escape($this->label)."'" : "null")."";
+		$sql .= " label=".(isset($this->label) ? "'".$this->db->escape($this->label)."'" : "null");
 		$sql .= " WHERE rowid=".((int) $this->id);
 		$sql .= " AND entity = ".$conf->entity;
 
@@ -213,7 +213,7 @@ class BankCateg // extends CommonObject
 		// Delete link between tag and bank account
 		if (!$error) {
 			$sql = "DELETE FROM ".MAIN_DB_PREFIX."categorie_account";
-			$sql .= " WHERE fk_categorie = ".$this->id;
+			$sql .= " WHERE fk_categorie = ".((int) $this->id);
 
 			$resql = $this->db->query($sql);
 			if (!$resql) {
@@ -225,7 +225,7 @@ class BankCateg // extends CommonObject
 		// Delete link between tag and bank lines
 		if (!$error) {
 			$sql = "DELETE FROM ".MAIN_DB_PREFIX."bank_class";
-			$sql .= " WHERE fk_categ = ".$this->id;
+			$sql .= " WHERE fk_categ = ".((int) $this->id);
 
 			$resql = $this->db->query($sql);
 			if (!$resql) {
